@@ -40,11 +40,17 @@ class face_detection:
 sqs = boto3.client('sqs')
 REQUEST_QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/xxxxxxxxxxx/xxxxxxx-req-queue"
 
+def image_to_base64(path: str) -> str:
+    with open(path, 'rb') as img_file:
+        encoded_bytes = base64.b64encode(img_file.read())
+    return encoded_bytes.decode('utf-8')
+
 def handler(event, context):
     try:
         body = json.loads(event.get('body', '{}'))
         content = body['content']
         req_id = body['request_id']
+        fname = body.get('filename', '')
         
         img_bytes = base64.b64decode(content)
         face_img_path = f"/tmp/{req_id}_face.jpg"
@@ -55,6 +61,19 @@ def handler(event, context):
         face_output_path = f"/tmp/{req_id}_face_out.jpg"
         face_detection_obj = face_detection()
         face_img_path = face_detection_obj.face_detection_func(face_img_path, face_output_path)
+        
+        base64_file = image_to_base64(face_img_path)
+        
+        msg = json.dumps({
+            'request_id': req_id,
+            'face_img': base64_file,
+            'filename': fname
+        })
+        
+        sqs.send_message(
+            QueueUrl=REQUEST_QUEUE_URL,
+            MessageBody=msg
+        )
         
         return {
             'statusCode': 200,
