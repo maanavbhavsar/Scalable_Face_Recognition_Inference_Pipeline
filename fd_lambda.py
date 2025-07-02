@@ -54,6 +54,7 @@ def image_to_base64(path: str) -> str:
     """
     with open(path, 'rb') as img_file:
         encoded_bytes = base64.b64encode(img_file.read())
+    # Decode to str for JSON payloads or HTTP bodies
     return encoded_bytes.decode('utf-8')
 
 
@@ -75,11 +76,12 @@ def handler(event, context):
 
         # Decode input frame
         img_bytes = base64.b64decode(content)
+        # img = Image.open(io.BytesIO(img_bytes)).convert('RGB')
         face_img_path = f"/tmp/{req_id}_face.jpg"
 
-        print(f"Processing request {req_id}")
         with open(face_img_path, 'wb') as f:
             f.write(img_bytes)
+        print(f"Face image saved to {face_img_path}")
         face_output_path = f"/tmp/{req_id}_face_out.jpg"
         face_detection_obj = face_detection()
         face_img_path = face_detection_obj.face_detection_func(face_img_path, face_output_path)
@@ -92,14 +94,14 @@ def handler(event, context):
                 'filename':   fname
             })
         
-        print(f"Sending message to SQS")
+        print(f"Sending message to SQS: {msg}")
         
         sqs.send_message(
                 QueueUrl=REQUEST_QUEUE_URL,
                 MessageBody=msg
             )
             
-        print(f"Message sent successfully")
+        print(f"Message sent to SQS: {msg}")
         return {
             'statusCode': 200,
             'body': json.dumps({
