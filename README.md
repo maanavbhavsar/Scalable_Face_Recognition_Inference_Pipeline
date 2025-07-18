@@ -39,3 +39,11 @@ docker build -t face-recognition-lambda .
 ## Deployment
 
 Deploy the Lambda functions using AWS SAM or Serverless Framework with the provided Dockerfile.
+
+## Model Weights
+
+The project requires pre-trained model weights:
+- `resnetV1.pt`: Traced InceptionResnetV1 model
+- `resnetV1_video_weights.pt`: Pre-computed embeddings and labels for face matching
+
+These should be placed in the Lambda task root directory or configured via environment variables.
